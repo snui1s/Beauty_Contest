@@ -81,8 +81,8 @@ beautycontest/
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) v18 or higher (or [Bun](https://bun.sh/) as an alternative runtime)
-- npm, yarn, pnpm, or bun package manager
+- [Bun](https://bun.sh/) v1.0 or higher (recommended)
+- Alternatively, [Node.js](https://nodejs.org/) v18 or higher with npm, yarn, or pnpm
 
 ---
 
@@ -99,21 +99,21 @@ cd Beauty_Contest
 
 ```bash
 cd server
-npm install
+bun install
 ```
 
 ### 3. Install client dependencies
 
 ```bash
 cd ../client
-npm install
+bun install
 ```
 
 ### 4. Start the server
 
 ```bash
 # From the server/ directory
-npm run dev
+bun run dev
 # Server runs on http://localhost:4000
 ```
 
@@ -121,7 +121,7 @@ npm run dev
 
 ```bash
 # From the client/ directory
-npm run dev
+bun run dev
 # Client runs on http://localhost:3000
 ```
 
@@ -173,14 +173,14 @@ No environment variables are required to run the project locally with default se
 
 | Command | Description |
 |---------|-------------|
-| `npm start` | Start the server using Node.js |
-| `npm run dev` | Start the server with nodemon (auto-restart on file changes) |
+| `bun start` | Start the server using Bun |
+| `bun run dev` | Start the server with nodemon (auto-restart on file changes) |
 
 ### Client (`client/`)
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start the Next.js development server |
-| `npm run build` | Build the production bundle |
-| `npm start` | Start the production server (requires build first) |
-| `npm run lint` | Run ESLint on the codebase |
+| `bun run dev` | Start the Next.js development server |
+| `bun run build` | Build the production bundle |
+| `bun start` | Start the production server (requires build first) |
+| `bun run lint` | Run ESLint on the codebase |
