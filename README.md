@@ -6,6 +6,7 @@ A real-time multiplayer number-guessing game inspired by the Beauty Contest game
 
 ## Table of Contents
 
+- [Disclaimer](#disclaimer)
 - [Overview](#overview)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
@@ -14,6 +15,14 @@ A real-time multiplayer number-guessing game inspired by the Beauty Contest game
 - [Game Rules](#game-rules)
 - [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
+
+---
+
+## Disclaimer
+
+This project is an unofficial fan-made recreation of the "Beauty Contest" game featured in *Alice in Borderland*, originally a manga series by Haro Aso and adapted as a Netflix original drama series. All intellectual property, characters, and concepts related to *Alice in Borderland* belong to their respective rights holders.
+
+This project was built purely for personal entertainment — to enjoy a faithful recreation of the game with friends. It is a non-commercial, open-source fan project with no intention of monetization or distribution for profit. No copyright infringement is intended.
 
 ---
 
