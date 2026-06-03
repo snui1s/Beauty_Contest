@@ -51,7 +51,7 @@ function endRound(roomCode) {
   clearIntervalForRoom(room);
 
   // Calculate results using game logic utility
-  const resultData = calculateRoundResult(room.players);
+  const resultData = calculateRoundResult(room.players, room.settings);
 
   // Transition state
   room.gameState = resultData.isGameOver ? 'GAME_OVER' : 'ROUND_SUMMARY';
@@ -108,11 +108,32 @@ function startRound(roomCode) {
     room.shownRules = [];
   }
 
-  // Check if a new rule milestone is triggered (4, 3, or 2 players)
+  // Determine which rule milestone to trigger this round
+  // milestone 5 = game intro (first round only), 4/3/2 = dynamic survival rules
   let triggerRule = null;
-  if ((activeCount === 4 || activeCount === 3 || activeCount === 2) && !room.shownRules.includes(activeCount)) {
-    triggerRule = activeCount;
-    room.shownRules.push(activeCount);
+
+  const rule4Enabled = room.settings ? room.settings.rule4Enabled !== false : true;
+  const rule3Enabled = room.settings ? room.settings.rule3Enabled !== false : true;
+  const rule2Enabled = room.settings ? room.settings.rule2Enabled !== false : true;
+
+  if (room.round === 1 && !room.shownRules.includes(5)) {
+    // Show the basic how-to-play intro on round 1
+    triggerRule = 5;
+    room.shownRules.push(5);
+
+    // Also push any rules that are already active for the starting player count
+    if (activeCount <= 4 && rule4Enabled) room.shownRules.push(4);
+    if (activeCount <= 3 && rule3Enabled) room.shownRules.push(3);
+    if (activeCount <= 2 && rule2Enabled) room.shownRules.push(2);
+  } else if (activeCount === 4 && rule4Enabled && !room.shownRules.includes(4)) {
+    triggerRule = 4;
+    room.shownRules.push(4);
+  } else if (activeCount === 3 && rule3Enabled && !room.shownRules.includes(3)) {
+    triggerRule = 3;
+    room.shownRules.push(3);
+  } else if (activeCount === 2 && rule2Enabled && !room.shownRules.includes(2)) {
+    triggerRule = 2;
+    room.shownRules.push(2);
   }
 
   if (triggerRule !== null) {
@@ -161,7 +182,7 @@ io.on('connection', (socket) => {
     const newPlayer = {
       id: socket.id,
       username: username.trim(),
-      points: 0,
+      points: 10,
       currentSubmit: null,
       isHost: true,
       isEliminated: false
@@ -177,14 +198,21 @@ io.on('connection', (socket) => {
       lastRoundResults: null,
       shownRules: [],
       activeRuleIntro: null,
-      ruleAcknowledgements: null
+      ruleAcknowledgements: null,
+      settings: {
+        rule4Enabled: true,
+        rule3Enabled: true,
+        rule2Enabled: true,
+        startingPoints: 10
+      }
     };
 
     socket.join(roomCode);
     socket.emit('room_created', {
       roomCode,
       players: rooms[roomCode].players,
-      gameState: rooms[roomCode].gameState
+      gameState: rooms[roomCode].gameState,
+      settings: rooms[roomCode].settings
     });
     console.log(`[Room Created] Code: ${roomCode} by ${username}`);
   });
@@ -219,7 +247,7 @@ io.on('connection', (socket) => {
     const newPlayer = {
       id: socket.id,
       username: username.trim(),
-      points: 0,
+      points: room.settings.startingPoints,
       currentSubmit: null,
       isHost: false,
       isEliminated: false
@@ -232,7 +260,8 @@ io.on('connection', (socket) => {
     socket.emit('room_joined', {
       roomCode: code,
       players: room.players,
-      gameState: room.gameState
+      gameState: room.gameState,
+      settings: room.settings
     });
 
     // Broadcast to other players in the room
@@ -409,7 +438,7 @@ io.on('connection', (socket) => {
 
     // Reset scores & elimination flags for all current players
     room.players.forEach(p => {
-      p.points = 0;
+      p.points = room.settings.startingPoints;
       p.currentSubmit = null;
       p.isEliminated = false;
     });
@@ -424,10 +453,57 @@ io.on('connection', (socket) => {
     // Send reset details to all players
     io.to(targetRoomCode).emit('game_restarted', {
       players: room.players,
-      gameState: room.gameState
+      gameState: room.gameState,
+      settings: room.settings
     });
     
     console.log(`[Game Restarted] Room: ${targetRoomCode}`);
+  });
+
+  // 6b. Update Settings Event
+  socket.on('update_settings', ({ settings }) => {
+    let targetRoomCode = null;
+    for (const code in rooms) {
+      const host = rooms[code].players.find(p => p.id === socket.id && p.isHost);
+      if (host) {
+        targetRoomCode = code;
+        break;
+      }
+    }
+
+    if (!targetRoomCode) {
+      return socket.emit('error_message', 'Only the host can update room settings.');
+    }
+
+    const room = rooms[targetRoomCode];
+    if (room.gameState !== 'LOBBY') {
+      return socket.emit('error_message', 'Cannot change settings once game has started.');
+    }
+
+    const updatedSettings = { ...settings };
+    if (updatedSettings.startingPoints !== undefined) {
+      const startPoints = parseInt(updatedSettings.startingPoints, 10);
+      if (isNaN(startPoints) || startPoints < 3 || startPoints > 20) {
+        return socket.emit('error_message', 'Starting points limit must be between 3 and 20.');
+      }
+      updatedSettings.startingPoints = startPoints;
+
+      // Update all players in the lobby to match the new starting points
+      room.players.forEach(p => {
+        p.points = startPoints;
+      });
+    }
+
+    room.settings = {
+      ...room.settings,
+      ...updatedSettings
+    };
+
+    io.to(targetRoomCode).emit('settings_updated', {
+      settings: room.settings,
+      players: room.players
+    });
+    console.log(`[Settings Updated] Room: ${targetRoomCode} settings:`, room.settings);
   });
 
   // 7. Disconnect Handler

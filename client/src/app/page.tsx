@@ -25,6 +25,7 @@ export default function Home() {
     error,
     activeRuleIntro,
     acknowledgedPlayerIds,
+    settings,
     createRoom,
     joinRoom,
     startGame,
@@ -34,10 +35,11 @@ export default function Home() {
     clearError,
     acknowledgeRule,
     leaveRoom,
+    updateSettings,
   } = useGameSocket();
 
   // Check if any player's health points are critically low (for red warning vignetting)
-  const isAnyPlayerCritical = players.some((p) => !p.isEliminated && p.points <= -8);
+  const isAnyPlayerCritical = players.some((p) => !p.isEliminated && p.points <= 2);
 
   return (
     <div className="relative min-h-screen flex flex-col justify-between py-6 px-4 md:px-8">
@@ -113,6 +115,8 @@ export default function Home() {
             createRoom={createRoom}
             joinRoom={joinRoom}
             startGame={startGame}
+            settings={settings}
+            updateSettings={updateSettings}
           />
         ) : (
           /* Main active gameplay layout containing split content and Leaderboard sidebar */
@@ -157,8 +161,9 @@ export default function Home() {
                 socketId={socketId}
                 submittedPlayerIds={submittedPlayerIds}
                 gameState={gameState}
+                settings={settings}
               />
-              <RulesGuide players={players} />
+              <RulesGuide players={players} settings={settings} />
             </div>
           </div>
         )}
@@ -178,6 +183,7 @@ export default function Home() {
           socketId={socketId}
           acknowledgedPlayerIds={acknowledgedPlayerIds}
           acknowledgeRule={acknowledgeRule}
+          settings={settings}
         />
       )}
     </div>

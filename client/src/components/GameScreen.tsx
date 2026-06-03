@@ -148,7 +148,7 @@ export function GameScreen({
                       className={`aspect-square flex items-center justify-center font-mono text-[10px] sm:text-xs border transition-all duration-100 ${
                         selectedNum === 0
                           ? "bg-zinc-950 text-neonCyan font-bold border-neonCyan shadow-[0_0_8px_#00f0ff]"
-                          : "bg-cyan-200/90 hover:bg-cyan-300 text-zinc-950 border-cyan-300/40"
+                          : "bg-cyan-200/90 hover:bg-cyan-300 text-cyan-950 border-cyan-300/40"
                       }`}
                     >
                       0
@@ -165,7 +165,7 @@ export function GameScreen({
                         className={`aspect-square flex items-center justify-center font-mono text-[10px] sm:text-xs border transition-all duration-100 ${
                           selectedNum === num
                             ? "bg-zinc-950 text-neonCyan font-bold border-neonCyan shadow-[0_0_8px_#00f0ff]"
-                            : "bg-cyan-200/90 hover:bg-cyan-300 text-zinc-950 border-cyan-300/40"
+                            : "bg-cyan-200/90 hover:bg-cyan-300 text-cyan-950 border-cyan-300/40"
                       }`}
                       >
                         {num}
@@ -184,7 +184,7 @@ export function GameScreen({
 
             <button
               type="submit"
-              className="w-full py-4 font-orbitron font-bold uppercase rounded-lg text-sm bg-neonCyan text-zinc-950 hover:bg-cyan-400 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2 hover:shadow-[0_0_25px_rgba(0,240,255,0.45)]"
+              className="w-full py-4 font-orbitron font-bold uppercase rounded-lg text-sm bg-neonCyan text-cyan-950 hover:bg-cyan-400 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2 hover:shadow-[0_0_25px_rgba(0,240,255,0.45)]"
             >
               <Lock className="size-4" /> Lock Submission
             </button>

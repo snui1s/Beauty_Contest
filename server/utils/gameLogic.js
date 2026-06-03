@@ -18,7 +18,7 @@
  *     ultimateWinner: Object or null
  *   }
  */
-function calculateRoundResult(players) {
+function calculateRoundResult(players, settings) {
   // 1. Filter out already eliminated players
   const activePlayers = players.filter(p => !p.isEliminated);
 
@@ -62,9 +62,52 @@ function calculateRoundResult(players) {
     pointDeductions[p.id] = 1;
   });
 
-  // 3. Dynamic Rule Dispatcher based on active count (Cumulative)
-  const isDuplicateRuleActive = activeCount <= 4;
-  const isZeroVsOneHundredActive = activeCount <= 3;
+  // Extract enabled rules from settings (default to true if undefined)
+  const rule4Enabled = settings ? settings.rule4Enabled !== false : true;
+  const rule3Enabled = settings ? settings.rule3Enabled !== false : true;
+  const rule2Enabled = settings ? settings.rule2Enabled !== false : true;
+
+  // 3. Dynamic Rule Dispatcher based on active count and settings
+  const isDuplicateRuleActive = activeCount <= 4 && rule4Enabled;
+  const isExactWinningNumberRuleActive = activeCount <= 3 && rule3Enabled;
+  const isZeroVsOneHundredActive = activeCount <= 2 && rule2Enabled;
+
+  let hasExactWinner = false;
+
+  const evaluateNormalOrDuel = () => {
+    if (isZeroVsOneHundredActive &&
+        submissions.some(s => s.number === 0) &&
+        submissions.some(s => s.number === 100)) {
+      
+      ruleApplied = "0 vs 100 Duel Clash";
+      winners = submissions.filter(sub => sub.number === 100).map(sub => sub.id);
+
+      const sum = submissions.reduce((acc, sub) => acc + sub.number, 0);
+      average = sum / submissions.length;
+      targetResult = Number((average * 0.8).toFixed(2));
+    } else {
+      // Normal formula
+      const sum = submissions.reduce((acc, sub) => acc + sub.number, 0);
+      average = submissions.length > 0 ? sum / submissions.length : 0;
+      targetResult = Number((average * 0.8).toFixed(2));
+
+      let minDiff = Infinity;
+      submissions.forEach(sub => {
+        const diff = Math.abs(sub.number - targetResult);
+        if (diff < minDiff) {
+          minDiff = diff;
+          winners = [sub.id];
+        } else if (Math.abs(diff - minDiff) < 1e-9) {
+          winners.push(sub.id);
+        }
+      });
+
+      // Check if any winner has the exact winning number
+      if (isExactWinningNumberRuleActive) {
+        hasExactWinner = submissions.some(sub => sub.number === targetResult && winners.includes(sub.id));
+      }
+    }
+  };
 
   if (isDuplicateRuleActive) {
     // Rule: Duplicate numbers are invalidated
@@ -77,17 +120,12 @@ function calculateRoundResult(players) {
     const hasDuplicates = submissions.some(sub => counts[sub.number] >= 2);
 
     if (hasDuplicates) {
-      if (activeCount === 4) {
-        ruleApplied = "Duplicate Numbers Invalidated";
-      } else {
-        ruleApplied = "Duplicate Penalty (-2 Pts)";
-      }
+      ruleApplied = "Duplicate Numbers Invalidated";
 
-      // Duplicate pickers get penalized (-2 pts if activeCount <= 3, otherwise -1 pt)
-      const duplicatePenalty = activeCount <= 3 ? 2 : 1;
+      // Duplicate pickers get penalized (1 point)
       submissions.forEach(sub => {
         if (counts[sub.number] >= 2) {
-          pointDeductions[sub.id] = duplicatePenalty;
+          pointDeductions[sub.id] = 1;
         }
       });
 
@@ -107,6 +145,11 @@ function calculateRoundResult(players) {
             winners.push(sub.id);
           }
         });
+
+        // Check if any winner has the exact winning number
+        if (isExactWinningNumberRuleActive) {
+          hasExactWinner = validSubmissions.some(sub => sub.number === targetResult && winners.includes(sub.id));
+        }
       } else {
         // All submissions duplicated, everyone loses
         average = 0;
@@ -114,50 +157,19 @@ function calculateRoundResult(players) {
         winners = [];
       }
     } else {
-      // No duplicates, check 0 vs 100
-      if (isZeroVsOneHundredActive &&
-          submissions.some(s => s.number === 0) &&
-          submissions.some(s => s.number === 100)) {
-        
-        ruleApplied = activeCount === 3 ? "0 vs 100 (Three-Way)" : "0 vs 100 (Duel)";
-        winners = submissions.filter(sub => sub.number === 100).map(sub => sub.id);
-
-        const sum = submissions.reduce((acc, sub) => acc + sub.number, 0);
-        average = sum / submissions.length;
-        targetResult = Number((average * 0.8).toFixed(2));
-      } else {
-        // Normal formula
-        const sum = submissions.reduce((acc, sub) => acc + sub.number, 0);
-        average = sum / submissions.length;
-        targetResult = Number((average * 0.8).toFixed(2));
-
-        let minDiff = Infinity;
-        submissions.forEach(sub => {
-          const diff = Math.abs(sub.number - targetResult);
-          if (diff < minDiff) {
-            minDiff = diff;
-            winners = [sub.id];
-          } else if (Math.abs(diff - minDiff) < 1e-9) {
-            winners.push(sub.id);
-          }
-        });
-      }
+      // No duplicates, proceed to check 0 vs 100 or normal math
+      evaluateNormalOrDuel();
     }
   } else {
-    // Normal Average * 0.8 formula (for 5 players)
-    const sum = submissions.reduce((acc, sub) => acc + sub.number, 0);
-    average = submissions.length > 0 ? sum / submissions.length : 0;
-    targetResult = Number((average * 0.8).toFixed(2));
+    // Duplicate rule not active, evaluate using all submissions
+    evaluateNormalOrDuel();
+  }
 
-    let minDiff = Infinity;
-    submissions.forEach(sub => {
-      const diff = Math.abs(sub.number - targetResult);
-      if (diff < minDiff) {
-        minDiff = diff;
-        winners = [sub.id];
-      } else if (Math.abs(diff - minDiff) < 1e-9) {
-        winners.push(sub.id);
-      }
+  // Apply penalty doubler if exact target is hit
+  if (hasExactWinner) {
+    ruleApplied = "Exact Target Hit! Penalty Doubled (-2 Pts)";
+    activePlayers.forEach(p => {
+      pointDeductions[p.id] = 2; // Double penalty for all who didn't win
     });
   }
 
@@ -176,8 +188,9 @@ function calculateRoundResult(players) {
           pointsDeducted: penalty
         });
       }
-      // Check for elimination (point limit is -10)
-      if (p.points <= -10) {
+      // Check for elimination
+      if (p.points <= 0) {
+        p.points = 0;
         p.isEliminated = true;
         eliminatedThisRound.push(p.id);
       }

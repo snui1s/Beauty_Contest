@@ -68,11 +68,11 @@ export function SummaryScreen({
               {results.ruleApplied === "Duplicate Numbers Invalidated" && (
                 <span>Duplicate picks detected and invalidated! Repeated numbers were excluded from the average calculation, and duplicate pickers were penalized (-1).</span>
               )}
-              {results.ruleApplied === "0 vs 100 (Three-Way)" && (
-                <span>Three-Way 0 vs 100 clash! Both 0 and 100 were selected in a 3-player round. Calculation bypassed; player(s) choosing 100 win immediately.</span>
+              {results.ruleApplied === "Exact Target Hit! Penalty Doubled (-2 Pts)" && (
+                <span>Exact target matched! A player chose the exact winning number (average × 0.8). All other players lose -2 points instead of -1.</span>
               )}
-              {results.ruleApplied === "0 vs 100 (Duel)" && (
-                <span>1v1 Duel 0 vs 100 clash! Both 0 and 100 were selected. Calculation bypassed; player choosing 100 wins the duel immediately.</span>
+              {results.ruleApplied === "0 vs 100 Duel Clash" && (
+                <span>1v1 Duel 0 vs 100 clash! One player chose 0 and the other chose 100. Calculation bypassed; the player choosing 100 wins the duel immediately.</span>
               )}
             </div>
           </div>
@@ -202,7 +202,7 @@ export function SummaryScreen({
         {isHost ? (
           <button
             onClick={nextRound}
-            className="w-full max-w-sm py-4 font-orbitron font-bold uppercase rounded-lg text-sm bg-neonCyan text-zinc-950 hover:bg-cyan-400 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2 hover:shadow-[0_0_25px_rgba(0,240,255,0.45)]"
+            className="w-full max-w-sm py-4 font-orbitron font-bold uppercase rounded-lg text-sm bg-neonCyan text-cyan-950 hover:bg-cyan-400 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2 hover:shadow-[0_0_25px_rgba(0,240,255,0.45)]"
           >
             Start Next Round <ArrowRight className="size-4" />
           </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Player } from "@/hooks/useGameSocket";
+import { Player, RoomSettings } from "@/hooks/useGameSocket";
 import { Users, Copy, Check, Play, LogIn, Plus } from "lucide-react";
 import { RulesGuide } from "@/components/RulesGuide";
 
@@ -12,6 +12,8 @@ interface LobbyScreenProps {
   createRoom: (username: string) => void;
   joinRoom: (roomCode: string, username: string) => void;
   startGame: () => void;
+  settings?: RoomSettings;
+  updateSettings?: (settings: Partial<RoomSettings>) => void;
 }
 
 export function LobbyScreen({
@@ -21,6 +23,8 @@ export function LobbyScreen({
   createRoom,
   joinRoom,
   startGame,
+  settings,
+  updateSettings,
 }: LobbyScreenProps) {
   const [username, setUsername] = useState("");
   const [inputCode, setInputCode] = useState("");
@@ -60,7 +64,7 @@ export function LobbyScreen({
               <span className="text-neonCyan text-glow-cyan">CONTEST</span>
             </h1>
             <p className="text-zinc-500 font-mono text-xs leading-relaxed max-w-sm">
-              Balance Scale: Everyone chooses a number. The average is multiplied by 0.8. The closest survives. Reaching -10 points means death.
+              Balance Scale: Everyone chooses a number. The average is multiplied by 0.8. The closest survives. Reaching 0 points means death.
             </p>
           </div>
 
@@ -70,8 +74,8 @@ export function LobbyScreen({
             <ul className="list-disc pl-4 space-y-2 text-zinc-400">
               <li>Supports <span className="text-white font-bold">2 - 5 players</span></li>
               <li>Select Number from <span className="text-white font-bold">0 to 100</span> within 60s.</li>
-              <li>The average is multiplied by 0.8, the closest one gets 0 points. Others are penalized</li>
-              <li>Reaching <span className="text-neonCrimson font-bold">-10 points</span> triggers instant <span className="text-neonCrimson font-bold uppercase">GAME OVER</span>.</li>
+              <li>The average is multiplied by 0.8, the closest one survives. Others lose points.</li>
+              <li>Reaching <span className="text-neonCrimson font-bold">0 points</span> triggers instant <span className="text-neonCrimson font-bold uppercase">GAME OVER</span>.</li>
             </ul>
           </div>
         </div>
@@ -107,7 +111,7 @@ export function LobbyScreen({
                 <button
                   type="submit"
                   disabled={!username.trim()}
-                  className="w-full py-3.5 px-4 font-orbitron font-bold uppercase rounded-lg text-sm bg-neonCyan text-zinc-950 hover:bg-cyan-400 disabled:opacity-40 disabled:pointer-events-none transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2 hover:shadow-[0_0_25px_rgba(0,240,255,0.45)]"
+                  className="w-full py-3.5 px-4 font-orbitron font-bold uppercase rounded-lg text-sm bg-neonCyan text-cyan-950 hover:bg-cyan-400 disabled:opacity-40 disabled:pointer-events-none transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2 hover:shadow-[0_0_25px_rgba(0,240,255,0.45)]"
                 >
                   <Plus className="size-4" /> Create Room
                 </button>
@@ -226,13 +230,197 @@ export function LobbyScreen({
 
           <div className="border-t border-zinc-800 my-6"></div>
 
+          {/* Room Settings Panel */}
+          <div className="text-left space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-850 pb-2">
+              <span className="text-xs font-bold font-orbitron tracking-wider text-neonCyan uppercase">
+                ⬥ ROOM RULE CONFIGURATION
+              </span>
+              {!isHost && (
+                <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                  Read Only
+                </span>
+              )}
+            </div>
+            
+            <div className="space-y-3">
+              {/* Starting Points Setting */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-950/40 border border-zinc-850 transition-all duration-300">
+                <div className="space-y-1 pr-4">
+                  <div className="text-xs font-bold font-mono text-zinc-355 text-zinc-300">
+                    Starting Points
+                  </div>
+                  <div className="text-[10px] font-mono text-zinc-500">
+                    Initial score for all players. Reaching 0 triggers elimination.
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={!isHost || (settings?.startingPoints ?? 10) <= 3}
+                    onClick={() => updateSettings?.({ startingPoints: (settings?.startingPoints ?? 10) - 1 })}
+                    className={`size-7 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center justify-center font-bold text-sm transition-all duration-200 outline-none focus:outline-none ${
+                      !isHost || (settings?.startingPoints ?? 10) <= 3
+                        ? 'opacity-30 cursor-not-allowed'
+                        : 'hover:border-neonCyan hover:text-neonCyan cursor-pointer'
+                    }`}
+                  >
+                    -
+                  </button>
+                  <span className="font-mono text-sm font-bold text-neonCyan text-glow-cyan w-10 text-center select-none">
+                    {settings?.startingPoints ?? 10}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={!isHost || (settings?.startingPoints ?? 10) >= 20}
+                    onClick={() => updateSettings?.({ startingPoints: (settings?.startingPoints ?? 10) + 1 })}
+                    className={`size-7 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 flex items-center justify-center font-bold text-sm transition-all duration-200 outline-none focus:outline-none ${
+                      !isHost || (settings?.startingPoints ?? 10) >= 20
+                        ? 'opacity-30 cursor-not-allowed'
+                        : 'hover:border-neonCyan hover:text-neonCyan cursor-pointer'
+                    }`}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Core Fallback Rule (5 Players) - Locked to Enabled */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-950/40 border border-zinc-900 opacity-60">
+                <div className="space-y-1 pr-4">
+                  <div className="text-xs font-bold font-mono text-zinc-355 text-zinc-300">
+                    5 Players: Standard Base (Core Fallback)
+                  </div>
+                  <div className="text-[10px] font-mono text-zinc-500">
+                    Target = Average &times; 0.8. Deducts 1 point from losers.
+                  </div>
+                </div>
+                <div className="relative inline-flex items-center cursor-not-allowed">
+                  <div className="w-10 h-6 bg-neonCyan/20 border border-neonCyan/30 rounded-full transition-all duration-300"></div>
+                  <div className="absolute left-5 top-1 bg-neonCyan w-4 h-4 rounded-full shadow-[0_0_8px_#00f0ff] transition-all"></div>
+                </div>
+              </div>
+
+              {/* Rule 4: Duplicate Invalidation */}
+              <div className={`flex items-center justify-between p-3 rounded-lg bg-zinc-950/40 border transition-all duration-300 ${
+                settings?.rule4Enabled ? 'border-zinc-850' : 'border-zinc-900 opacity-60'
+              }`}>
+                <div className="space-y-1 pr-4">
+                  <div className={`text-xs font-bold font-mono transition-colors ${settings?.rule4Enabled ? 'text-zinc-300' : 'text-zinc-500'}`}>
+                    4 Players: Duplicate Invalidation
+                  </div>
+                  <div className="text-[10px] font-mono text-zinc-500">
+                    Duplicate numbers are invalidated and pickers lose 1 pt.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={!isHost}
+                  onClick={() => updateSettings?.({ rule4Enabled: !settings?.rule4Enabled })}
+                  className={`relative inline-flex items-center rounded-full h-6 w-10 transition-all duration-300 outline-none focus:outline-none ${
+                    !isHost ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105'
+                  } ${
+                    settings?.rule4Enabled 
+                      ? 'bg-neonCyan/20 border border-neonCyan/50' 
+                      : 'bg-zinc-850 border border-zinc-800'
+                  }`}
+                >
+                  <span
+                    className={`inline-block w-4 h-4 rounded-full transition-all duration-300 ${
+                      settings?.rule4Enabled 
+                        ? 'translate-x-5 bg-neonCyan shadow-[0_0_8px_#00f0ff]' 
+                        : 'translate-x-1 bg-zinc-500'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Rule 3: Exact Target Penalty */}
+              <div className={`flex items-center justify-between p-3 rounded-lg bg-zinc-950/40 border transition-all duration-300 ${
+                settings?.rule3Enabled ? 'border-zinc-850' : 'border-zinc-900 opacity-60'
+              }`}>
+                <div className="space-y-1 pr-4">
+                  <div className={`text-xs font-bold font-mono transition-colors ${settings?.rule3Enabled ? 'text-zinc-300' : 'text-zinc-500'}`}>
+                    3 Players: Exact Target Penalty
+                  </div>
+                  <div className="text-[10px] font-mono text-zinc-500">
+                    Exact target hit doubles penalty to 2 pts for non-winners.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={!isHost}
+                  onClick={() => updateSettings?.({ rule3Enabled: !settings?.rule3Enabled })}
+                  className={`relative inline-flex items-center rounded-full h-6 w-10 transition-all duration-300 outline-none focus:outline-none ${
+                    !isHost ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105'
+                  } ${
+                    settings?.rule3Enabled 
+                      ? 'bg-neonCyan/20 border border-neonCyan/50' 
+                      : 'bg-zinc-850 border border-zinc-800'
+                  }`}
+                >
+                  <span
+                    className={`inline-block w-4 h-4 rounded-full transition-all duration-300 ${
+                      settings?.rule3Enabled 
+                        ? 'translate-x-5 bg-neonCyan shadow-[0_0_8px_#00f0ff]' 
+                        : 'translate-x-1 bg-zinc-500'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Rule 2: Duel 0 vs 100 */}
+              <div className={`flex items-center justify-between p-3 rounded-lg bg-zinc-950/40 border transition-all duration-300 ${
+                settings?.rule2Enabled ? 'border-zinc-850' : 'border-zinc-900 opacity-60'
+              }`}>
+                <div className="space-y-1 pr-4">
+                  <div className={`text-xs font-bold font-mono transition-colors ${settings?.rule2Enabled ? 'text-zinc-300' : 'text-zinc-500'}`}>
+                    2 Players: Duel 0 vs 100
+                  </div>
+                  <div className="text-[10px] font-mono text-zinc-500">
+                    Clash of 0 and 100 gives automatic win to 100 picker.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={!isHost}
+                  onClick={() => updateSettings?.({ rule2Enabled: !settings?.rule2Enabled })}
+                  className={`relative inline-flex items-center rounded-full h-6 w-10 transition-all duration-300 outline-none focus:outline-none ${
+                    !isHost ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-105'
+                  } ${
+                    settings?.rule2Enabled 
+                      ? 'bg-neonCyan/20 border border-neonCyan/50' 
+                      : 'bg-zinc-850 border border-zinc-800'
+                  }`}
+                >
+                  <span
+                    className={`inline-block w-4 h-4 rounded-full transition-all duration-300 ${
+                      settings?.rule2Enabled 
+                        ? 'translate-x-5 bg-neonCyan shadow-[0_0_8px_#00f0ff]' 
+                        : 'translate-x-1 bg-zinc-500'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {!isHost && (
+              <p className="text-[10px] font-mono text-zinc-500 italic mt-1 text-center">
+                *Only the host can configure protocol parameters
+              </p>
+            )}
+          </div>
+
+          <div className="border-t border-zinc-800 my-6"></div>
+
           {/* Host action panel vs. client wait loader */}
           {isHost ? (
             <div className="space-y-3">
               <button
                 onClick={startGame}
                 disabled={players.length < 2}
-                className="w-full py-4 font-orbitron font-bold uppercase rounded-lg text-sm bg-neonCyan text-zinc-950 hover:bg-cyan-400 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none hover:shadow-[0_0_25px_rgba(0,240,255,0.45)]"
+                className="w-full py-4 font-orbitron font-bold uppercase rounded-lg text-sm bg-neonCyan text-cyan-950 hover:bg-cyan-400 transition-all duration-300 shadow-[0_0_15px_rgba(0,240,255,0.25)] flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none hover:shadow-[0_0_25px_rgba(0,240,255,0.45)]"
               >
                 <Play className="size-4 fill-current" /> Start Game
               </button>

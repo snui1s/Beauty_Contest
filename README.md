@@ -148,18 +148,22 @@ Each round, players submit a number between **0 and 100**. The winning target is
 Target = Average of all submitted numbers x 0.8
 ```
 
-The player(s) whose number is closest to the target win the round. All other players lose **1 point**. A player is eliminated when their score reaches **-10**.
+The player(s) whose number is closest to the target win the round. All other players lose **1 point**. Players start with **10 points** (customizable by the host between 3 and 20) and are eliminated when their score reaches **0**.
 
-### Dynamic Rules (by surviving player count)
+### Dynamic Rules & Customization
 
-As the game progresses, additional rules activate cumulatively based on the number of active (non-eliminated) players:
+The room host has the ability to customize the match parameters from the Lobby Screen:
+- **Starting Points**: Change the initial points count for all players (from 3 to 20).
+- **Survival Rules**: Toggle rules for **4 Players, 3 Players, and 2 Players** on/off individually before starting.
+- If a rule is disabled, its corresponding introduction slide is skipped, and it will not apply during gameplay.
+
+When enabled, they activate cumulatively based on the number of active (non-eliminated) players:
 
 | Trigger | Rule |
 |---------|------|
-| 5 or fewer players | If any player picks **exactly 0** and another picks **exactly 100**, the player who picked 100 wins the round immediately; all others lose 1 point. |
-| 4 or fewer players | If two or more players submit the **same number**, those numbers are declared invalid and excluded from the average calculation. Players with invalid picks lose 1 point immediately. |
-| 3 or fewer players | Duplicate picks result in **-2 points** instead of -1. |
-| 2 or fewer players | All previously activated rules remain in effect. |
+| 4 or fewer players | If two or more players choose the **exact same number**, that number becomes invalid (excluded from the average calculation). Those players lose **1 point** immediately. |
+| 3 or fewer players | If any player chooses the **exact winning number** (matching average × 0.8), all other players lose **2 points** instead of 1. |
+| 2 or fewer players | If one player chooses **0** and another player chooses **100**, the **100** automatically wins the round immediately. |
 
 All rules activated at earlier thresholds remain active for the remainder of the game. A modal notification is shown to all players the first time each rule activates, and the round timer pauses until every player acknowledges the new rule.
 

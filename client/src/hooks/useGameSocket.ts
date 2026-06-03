@@ -13,6 +13,13 @@ export interface Player {
   isEliminated: boolean;
 }
 
+export interface RoomSettings {
+  rule4Enabled: boolean;
+  rule3Enabled: boolean;
+  rule2Enabled: boolean;
+  startingPoints: number;
+}
+
 export interface RoundResults {
   submissions: Array<{ username: string; number: number }>;
   average: number;
@@ -45,6 +52,12 @@ export function useGameSocket() {
   const [submittedPlayerIds, setSubmittedPlayerIds] = useState<string[]>([]);
   const [activeRuleIntro, setActiveRuleIntro] = useState<number | null>(null);
   const [acknowledgedPlayerIds, setAcknowledgedPlayerIds] = useState<string[]>([]);
+  const [settings, setSettings] = useState<RoomSettings>({
+    rule4Enabled: true,
+    rule3Enabled: true,
+    rule2Enabled: true,
+    startingPoints: 10,
+  });
 
   // Connect to socket server
   useEffect(() => {
@@ -66,18 +79,20 @@ export function useGameSocket() {
     });
 
     // Room creation acknowledgment
-    socket.on("room_created", ({ roomCode, players, gameState }: { roomCode: string; players: Player[]; gameState: "LOBBY" | "PLAYING" | "ROUND_SUMMARY" | "GAME_OVER" }) => {
+    socket.on("room_created", ({ roomCode, players, gameState, settings }: { roomCode: string; players: Player[]; gameState: "LOBBY" | "PLAYING" | "ROUND_SUMMARY" | "GAME_OVER"; settings?: RoomSettings }) => {
       setRoomCode(roomCode);
       setPlayers(players);
       setGameState(gameState);
+      if (settings) setSettings(settings);
       setError(null);
     });
 
     // Room join acknowledgment
-    socket.on("room_joined", ({ roomCode, players, gameState }: { roomCode: string; players: Player[]; gameState: "LOBBY" | "PLAYING" | "ROUND_SUMMARY" | "GAME_OVER" }) => {
+    socket.on("room_joined", ({ roomCode, players, gameState, settings }: { roomCode: string; players: Player[]; gameState: "LOBBY" | "PLAYING" | "ROUND_SUMMARY" | "GAME_OVER"; settings?: RoomSettings }) => {
       setRoomCode(roomCode);
       setPlayers(players);
       setGameState(gameState);
+      if (settings) setSettings(settings);
       setError(null);
     });
 
@@ -145,9 +160,10 @@ export function useGameSocket() {
     });
 
     // Host restarted the game back to Lobby
-    socket.on("game_restarted", ({ players, gameState }: { players: Player[]; gameState: "LOBBY" | "PLAYING" | "ROUND_SUMMARY" | "GAME_OVER" }) => {
+    socket.on("game_restarted", ({ players, gameState, settings }: { players: Player[]; gameState: "LOBBY" | "PLAYING" | "ROUND_SUMMARY" | "GAME_OVER"; settings?: RoomSettings }) => {
       setGameState(gameState);
       setPlayers(players);
+      if (settings) setSettings(settings);
       setRound(0);
       setTimer(60);
       setLastRoundResults(null);
@@ -155,6 +171,11 @@ export function useGameSocket() {
       setError(null);
       setActiveRuleIntro(null);
       setAcknowledgedPlayerIds([]);
+    });
+
+    socket.on("settings_updated", ({ settings, players }: { settings: RoomSettings; players?: Player[] }) => {
+      setSettings(settings);
+      if (players) setPlayers(players);
     });
 
     // Universal error dispatcher
@@ -204,6 +225,10 @@ export function useGameSocket() {
     socketRef.current?.emit("acknowledge_rule");
   }, []);
 
+  const updateSettings = useCallback((newSettings: Partial<RoomSettings>) => {
+    socketRef.current?.emit("update_settings", { settings: newSettings });
+  }, []);
+
   const leaveRoom = useCallback(() => {
     if (socketRef.current) {
       socketRef.current.disconnect();
@@ -236,6 +261,7 @@ export function useGameSocket() {
     error,
     activeRuleIntro,
     acknowledgedPlayerIds,
+    settings,
     createRoom,
     joinRoom,
     startGame,
@@ -245,5 +271,6 @@ export function useGameSocket() {
     clearError,
     acknowledgeRule,
     leaveRoom,
+    updateSettings,
   };
 }

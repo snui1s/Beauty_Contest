@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Player } from "@/hooks/useGameSocket";
+import { Player, RoomSettings } from "@/hooks/useGameSocket";
 import { ShieldAlert, Award, Skull, CheckCircle2 } from "lucide-react";
 
 interface LeaderboardProps {
@@ -9,9 +9,14 @@ interface LeaderboardProps {
   socketId: string | null;
   submittedPlayerIds?: string[];
   gameState?: "LOBBY" | "PLAYING" | "ROUND_SUMMARY" | "GAME_OVER";
+  settings?: RoomSettings;
 }
 
-export function Leaderboard({ players, socketId, submittedPlayerIds = [], gameState }: LeaderboardProps) {
+export function Leaderboard({ players, socketId, submittedPlayerIds = [], gameState, settings }: LeaderboardProps) {
+  const startingPoints = settings ? settings.startingPoints : 10;
+  const isDangerThreshold = 2;
+  const eliminationLimit = 0;
+
   // Sort players: Active first, then by points descending (least negative is higher)
   const sortedPlayers = [...players].sort((a, b) => {
     if (a.isEliminated && !b.isEliminated) return 1;
@@ -31,7 +36,7 @@ export function Leaderboard({ players, socketId, submittedPlayerIds = [], gameSt
         <h3 className="font-orbitron font-bold uppercase text-lg text-neonCyan tracking-wider flex items-center gap-2">
           LIFELINE INDEX
         </h3>
-        <span className="text-xs text-zinc-500 font-mono">POINT LIMIT: -10</span>
+        <span className="text-xs text-zinc-500 font-mono">STARTING POINTS: {startingPoints}</span>
       </div>
 
       <div className="space-y-3">
@@ -40,8 +45,8 @@ export function Leaderboard({ players, socketId, submittedPlayerIds = [], gameSt
           const isSubmitted = submittedPlayerIds.includes(player.id) || player.currentSubmit !== null;
           
           // Determine point hazard alerts
-          const isDanger = player.points <= -8;
-          const isEliminated = player.isEliminated || player.points <= -10;
+          const isDanger = player.points <= isDangerThreshold;
+          const isEliminated = player.isEliminated || player.points <= eliminationLimit;
 
           return (
             <div
@@ -102,7 +107,7 @@ export function Leaderboard({ players, socketId, submittedPlayerIds = [], gameSt
                             ? "bg-neonCrimson shadow-[0_0_5px_#ff003c]"
                             : "bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]"
                       }`}
-                      style={{ width: `${Math.max(0, (10 + player.points) * 10)}%` }}
+                      style={{ width: `${Math.max(0, (player.points / startingPoints) * 100)}%` }}
                     />
                   </div>
                 </div>
@@ -115,7 +120,7 @@ export function Leaderboard({ players, socketId, submittedPlayerIds = [], gameSt
                     </div>
                   ) : isDanger ? (
                     <div title="Danger Zone">
-                      <ShieldAlert className="size-5 text-neonCrimson animate-bounce" />
+                      <ShieldAlert className="size-5 text-neonCrimson animate-pulse" />
                     </div>
                   ) : null}
                 </div>
